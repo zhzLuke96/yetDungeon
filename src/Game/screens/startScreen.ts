@@ -1,6 +1,6 @@
 import * as ROT from 'rot-js';
-import { Game } from '../Game';
-import { Screen } from './Screen';
+import { Game } from '../game';
+import { Screen } from './screen';
 
 export class StartScreen implements Screen {
   // constructor() {

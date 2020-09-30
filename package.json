@@ -84,6 +84,7 @@
     "@babel/plugin-proposal-class-properties": "^7.10.4",
     "@types/lodash": "^4.14.161",
     "@types/rot-js": "^2.0.1",
+    "file-loader": "^6.1.0",
     "lodash": "^4.17.20",
     "rot-js": "^2.1.4"
   },

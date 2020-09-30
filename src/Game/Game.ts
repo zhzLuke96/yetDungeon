@@ -1,50 +1,29 @@
 import * as ROT from 'rot-js';
-import { Event } from '../Event';
-import { startScreen, playScreen, loseScreen, winScreen } from './screens';
-import { Screen } from './screens/Screen';
+import { TypelessEvent } from './typelessEvent';
+import { Screen } from './screens/screen';
 import './bindEvents';
-import { Entity } from './map/Entity';
-import {
-  EntityRepository,
-  isMessageRecipient,
-  isPlayerActor,
-} from './map/entities';
-import { Map } from './map/Map';
-import { Tile } from './map/Tile';
-import { shuffle } from './shuffle';
-import { ItemRepository } from './item/Item';
+import { Entity } from './entity';
+import { EntityRepository } from './entities';
+import { isMessageRecipient, isPlayerActor } from './mixins';
+import { Map } from './map';
+import { Tile } from './tile';
+import { shuffle } from './utils';
+import { ItemRepository } from './Item';
 import * as _ from 'lodash';
 
-export class Game extends Event {
-  static Tiles = {
-    null: new Tile(),
-    floor: new Tile({
-      character: '.',
-      walkable: true,
-      blocksLight: false,
-      describe: '平整的地面，看上去平淡无奇',
-    }),
-    wall: new Tile({
-      character: '#',
-      foreground: 'goldenrod',
-      diggable: true,
-      describe: '粗糙的土墙，看起来坑坑洼洼',
-    }),
-    stairsUp: new Tile({
-      character: '<',
-      foreground: 'white',
-      walkable: true,
-      blocksLight: false,
-      describe: '向上的楼梯',
-    }),
-    stairsDown: new Tile({
-      character: '>',
-      foreground: 'white',
-      walkable: true,
-      blocksLight: false,
-      describe: '向下的楼梯',
-    }),
-  };
+import { LoseScreen } from './screens/loseScreen';
+import { StartScreen } from './screens/startScreen';
+import { PlayScreen } from './screens/playScreen';
+import { WinScreen } from './screens/winScreen';
+import { Tiles } from './tiles';
+
+const startScreen = new StartScreen();
+const playScreen = new PlayScreen();
+const loseScreen = new LoseScreen();
+const winScreen = new WinScreen();
+
+export class Game extends TypelessEvent {
+  static Tiles = Tiles;
 
   static Screens = {
     startScreen,
@@ -222,7 +201,7 @@ export class Game extends Event {
     const [x, y] = [
       (tx / clientWidth) * screenWidth,
       (ty / clientHeight) * screenHeight,
-    ].map(Math.floor);
+    ].map(Math.round);
     this.dispatchEvent('MouseOverTilePosition', [x, y]);
   }
 }

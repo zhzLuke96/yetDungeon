@@ -1,5 +1,5 @@
 import * as ROT from 'rot-js';
-import { Game } from '../Game';
+import { Game } from '../game';
 
 export interface Screen {
   enter: () => void;

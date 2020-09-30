@@ -1,13 +1,10 @@
 import * as ROT from 'rot-js';
-import { Game, MainGame } from '../Game';
-import { createPlayer, Player } from '../map/entities';
-import { Entity } from '../map/Entity';
-import { Map } from '../map/Map';
-import { Tile } from '../map/Tile';
-import { Screen } from './Screen';
-import { Builder } from '../map/Builder';
-import { Glyph } from '../map/glyph';
-import { GlobalUIEvents } from '../../components/GlobalUIEvents';
+import { Game, MainGame } from '../game';
+import { createPlayer, Player } from '../entities';
+import { Map } from '../map';
+import { Screen } from './screen';
+import { Builder } from '../builder';
+import { Glyph } from '../glyph';
 
 const PlayScreenConfig = {
   mapWidth: 100,
@@ -19,6 +16,7 @@ export class PlayScreen implements Screen {
   private map = null as null | Map;
   private player = null as null | Player;
   private gameOver = false;
+  private mousePosition = [-1, -1];
 
   enter() {
     const { mapWidth, mapHeight, mapDepth } = PlayScreenConfig;
@@ -32,26 +30,44 @@ export class PlayScreen implements Screen {
     this.map.getEngine().start();
 
     // bind mouse events
-    MainGame.addEventListener('MouseOverTilePosition', ([x, y]: number[]) => {
-      if (!this.player || !this.map) {
-        return;
-      }
-      const currentDepth = this.player.getZ();
-      const [tlx, tly] = this.getTopLeftPosition();
-      const tile = this.map.getTile(tlx + x, tly + y, currentDepth);
-      const entity = this.map.getEntityAt(tlx + x, tly + y, currentDepth);
-      GlobalUIEvents.mouseOverOnTile(
-        tile === Game.Tiles.null ? null : tile,
-        entity || null
-      );
-    });
+    MainGame.addEventListener(
+      'MouseOverTilePosition',
+      this.MouseOverTilePositionHandler.bind(this)
+    );
   }
 
   exit() {
     console.log('Exited paly screen.');
+
+    // unmount
+    MainGame.removeEventListener(
+      'MouseOverTilePosition',
+      this.MouseOverTilePositionHandler.bind(this)
+    );
   }
 
-  getTopLeftPosition(
+  private MouseOverTilePositionHandler([sx, sy]: number[]) {
+    if (!this.player || !this.map) {
+      return;
+    }
+    const currentDepth = this.player.getZ();
+    const [tlx, tly] = this.getTopLeftPosition();
+    const [x, y] = [tlx + sx, tly + sy];
+    const tile = this.map.getTile(x, y, currentDepth);
+    const entity = this.map.getEntityAt(x, y, currentDepth);
+    const items = this.map.getItemsAt(x, y, currentDepth);
+    MainGame.dispatchEvent(
+      'mouseOverOnTile',
+      tile === Game.Tiles.null ? null : tile,
+      entity || null,
+      [...items]
+    );
+
+    // render mouse cursor
+    this.renderCursorAt(sx, sy);
+  }
+
+  private getTopLeftPosition(
     game: Game = MainGame,
     screenWidth: number = game.getScreenWidth(),
     screenHeight: number = game.getScreenHeight()
@@ -71,6 +87,15 @@ export class PlayScreen implements Screen {
     // Make sure we still have enough space to fit an entire game screen
     topLeftY = Math.min(topLeftY, this.map.getHeight() - screenHeight);
     return [topLeftX, topLeftY];
+  }
+
+  private renderCursorAt(x: number, y: number) {
+    const [oldX, oldY] = this.mousePosition;
+    if (oldX !== -1 && oldY !== -1) {
+      MainGame.getDisplay().draw(oldX, oldY, ' ', 'black', 'black');
+    }
+    this.mousePosition = [x, y];
+    this.render(MainGame.getDisplay(), MainGame);
   }
 
   render(display: ROT.Display, game: Game = MainGame) {
@@ -137,12 +162,13 @@ export class PlayScreen implements Screen {
             // over items.
             const items = map.getItemsAt(x, y, currentDepth);
             // If we have items, we want to render the top most item
-            if (items) {
+            if (items.length !== 0) {
               glyph = items[items.length - 1];
             }
             // Check if we have an entity at the position
-            if (map.getEntityAt(x, y, currentDepth)) {
-              glyph = map.getEntityAt(x, y, currentDepth);
+            const entity = map.getEntityAt(x, y, currentDepth);
+            if (entity) {
+              glyph = entity;
             }
             // Update the foreground color in case our glyph changed
             foreground = glyph.getForeground();
@@ -202,12 +228,22 @@ export class PlayScreen implements Screen {
       );
     }
 
+    // render mouse
+    const [mx, my] = this.mousePosition;
+    if (mx !== -1 && my !== -1) {
+      display.draw(mx, my, 'O', 'green', 'transparent');
+    }
+
     // Render player HP
     const stats = `%c{white}%b{black}HP: ${this.player.getHp()}/${this.player.getMaxHp()}`;
     display.drawText(0, screenHeight, stats);
   }
 
-  handleInput(inputType: string, inputData: KeyboardEvent, game: Game) {
+  handleInput(
+    inputType: string,
+    inputData: KeyboardEvent,
+    game: Game = MainGame
+  ) {
     const unlock = () => this.map?.getEngine().unlock();
     if (!this.map) {
       throw Error('Map is not initialized.');
@@ -304,7 +340,10 @@ export class PlayScreen implements Screen {
     const newY = this.player.getY() + dY;
     const newZ = this.player.getZ() + dZ;
     // Try to move to the new cell
-    this.player.tryMove(newX, newY, newZ, this.map);
+    this.player.tryMove(newX, newY, newZ, this.map, (x, y, z) => {
+      // dispatch event
+      MainGame.dispatchEvent('player_goto', [x, y, z]);
+    });
   }
 
   setGameOver(gameOver: boolean) {

@@ -8,7 +8,7 @@ module.exports = {
     extensions: ['.tsx', '.ts', '.js'],
     mainFields: ['main', 'module', 'browser']
   },
-  entry: path.resolve(rootPath, 'src', 'App.tsx'),
+  entry: path.resolve(rootPath, 'src/UI', 'App.tsx'),
   target: 'electron-renderer',
   devtool: 'source-map',
   module: {
@@ -22,6 +22,13 @@ module.exports = {
       {
         test: /\.css$/i,
         use: ['style-loader', 'css-loader']
+      },
+      {
+        test: /\.(ogg|mp3|wav|mpe?g)$/i,
+        loader: 'file-loader',
+        options: {
+          name: '[path][name].[ext]'
+        }
       }
     ]
   },
