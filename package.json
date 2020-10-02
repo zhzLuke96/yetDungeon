@@ -1,7 +1,7 @@
 {
-  "name": "electron-react-typescript",
+  "name": "yetdungeon",
   "version": "1.0.0",
-  "description": "An Electron boilerplate including TypeScript, React, Jest and ESLint.",
+  "description": "A dungeon game.",
   "main": "./dist/main.js",
   "scripts": {
     "dev": "npm-run-all -p dev:react electron:serve",
@@ -18,7 +18,7 @@
     "test": "jest"
   },
   "keywords": [],
-  "author": "Diego Fernandes <diego.schell.f@gmail.com>",
+  "author": "zhzluke96 <o2g.luke@outlook.com>",
   "license": "MIT",
   "devDependencies": {
     "@babel/core": "^7.9.0",
@@ -82,6 +82,7 @@
   },
   "dependencies": {
     "@babel/plugin-proposal-class-properties": "^7.10.4",
+    "@babel/plugin-transform-typescript": "^7.11.0",
     "@types/lodash": "^4.14.161",
     "@types/rot-js": "^2.0.1",
     "file-loader": "^6.1.0",

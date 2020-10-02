@@ -5,11 +5,12 @@ import { Map } from '../map';
 import { Screen } from './screen';
 import { Builder } from '../builder';
 import { Glyph } from '../glyph';
+import { MainSoundEngine } from '../soundEngine';
 
 const PlayScreenConfig = {
   mapWidth: 100,
   mapHeight: 64,
-  mapDepth: 6,
+  mapDepth: 3,
 };
 
 export class PlayScreen implements Screen {
@@ -34,6 +35,9 @@ export class PlayScreen implements Screen {
       'MouseOverTilePosition',
       this.MouseOverTilePositionHandler.bind(this)
     );
+
+    MainSoundEngine.setPlayer(this.player);
+    MainSoundEngine.setListenerPosition(this.player.getX(), this.player.getY());
   }
 
   exit() {
@@ -118,15 +122,10 @@ export class PlayScreen implements Screen {
     const currentDepth = this.player.getZ();
 
     // This object will keep track of all visible map cells
-    const visibleCells = map.computeLights(
-      this.player.getX(),
-      this.player.getY(),
-      currentDepth,
-      (x, y) => {
-        // Mark cell as explored
-        map.setExplored(x, y, currentDepth, true);
-      }
-    );
+    const visibleCells = this.player.computeVisiblesCells((x, y) => {
+      // Mark cell as explored
+      map.setExplored(x, y, currentDepth, true);
+    });
 
     // Iterate through all visible map cells
     for (let x = topLeftX; x < topLeftX + screenWidth; x++) {
@@ -244,7 +243,9 @@ export class PlayScreen implements Screen {
     inputData: KeyboardEvent,
     game: Game = MainGame
   ) {
-    const unlock = () => this.map?.getEngine().unlock();
+    const unlock = () => {
+      this.map?.getEngine().unlock();
+    };
     if (!this.map) {
       throw Error('Map is not initialized.');
     }
@@ -282,37 +283,45 @@ export class PlayScreen implements Screen {
         // Movement
         case 'Numpad4':
         case 'ArrowLeft': {
+          this.player?.setSightDIR(6);
           this.move(-1, 0);
           break;
         }
         case 'Numpad6':
         case 'ArrowRight': {
+          this.player?.setSightDIR(2);
           this.move(1, 0);
           break;
         }
         case 'Numpad8':
         case 'ArrowUp': {
+          this.player?.setSightDIR(0);
           this.move(0, -1);
           break;
         }
         case 'Numpad2':
         case 'ArrowDown': {
+          this.player?.setSightDIR(4);
           this.move(0, 1);
           break;
         }
         case 'Numpad1': {
+          this.player?.setSightDIR(5);
           this.move(-1, 1);
           break;
         }
         case 'Numpad3': {
+          this.player?.setSightDIR(3);
           this.move(1, 1);
           break;
         }
         case 'Numpad7': {
+          this.player?.setSightDIR(7);
           this.move(-1, -1);
           break;
         }
         case 'Numpad9': {
+          this.player?.setSightDIR(1);
           this.move(1, -1);
           break;
         }
@@ -343,6 +352,7 @@ export class PlayScreen implements Screen {
     this.player.tryMove(newX, newY, newZ, this.map, (x, y, z) => {
       // dispatch event
       MainGame.dispatchEvent('player_goto', [x, y, z]);
+      MainSoundEngine.setListenerPosition(x, y);
     });
   }
 

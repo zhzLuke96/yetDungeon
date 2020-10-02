@@ -93,7 +93,17 @@ export class Entity extends Glyph {
   }
 
   dispatchMoved(x: number, y: number, z: number) {
+    // dispatch self
     this.dispatchEvent('moved', [x, y, z]);
+
+    // dispatch position
+    if (!this.map) {
+      return;
+    }
+    const { tile, entity, items } = this.map.getAt(x, y, z);
+    tile?.dispatchEvent('trampled', x, y, z);
+    entity?.dispatchEvent('trampled', x, y, z);
+    items.map((item) => item?.dispatchEvent('trampled', x, y, z));
   }
 
   tryMove(

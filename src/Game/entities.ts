@@ -11,15 +11,12 @@ const {
   MessageRecipient,
   Sight,
   InventoryHolder,
-  WalkSpeaker,
 } = Mixins;
 
 // 👇 entitys 👇
 
-const PlayerConstructor = WalkSpeaker(
-  InventoryHolder(
-    Sight(MessageRecipient(Destructible(Attacker(PlayerActor(Entity)))))
-  )
+const PlayerConstructor = InventoryHolder(
+  Sight(MessageRecipient(Destructible(Attacker(PlayerActor(Entity)))))
 );
 export const createPlayer = () =>
   new PlayerConstructor({
@@ -28,15 +25,8 @@ export const createPlayer = () =>
     background: 'black',
     maxHp: 40,
     attackValue: 10,
-    sightRadius: 6,
+    sightRadius: 20,
     describe: '这就是你，兄弟！',
-    walkAudios: [
-      require('./assets/sounds/step/sand1.ogg'),
-      require('./assets/sounds/step/sand2.ogg'),
-      require('./assets/sounds/step/sand3.ogg'),
-      require('./assets/sounds/step/sand4.ogg'),
-      require('./assets/sounds/step/sand5.ogg'),
-    ],
   });
 export type Player = ReturnType<typeof createPlayer>;
 

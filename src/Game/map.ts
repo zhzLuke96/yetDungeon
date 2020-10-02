@@ -5,9 +5,6 @@ import { createBat, createFungus, createNewt, Player } from './entities';
 import { Game, MainGame } from './game';
 import { Item } from './Item';
 
-const d = () => new ROT.FOV.PreciseShadowcasting((x, y) => false, {});
-type PreciseShadowcasting = ReturnType<typeof d>;
-
 const s = () => new ROT.Scheduler.Simple();
 type Scheduler = ReturnType<typeof s>;
 
@@ -20,14 +17,10 @@ export class Map {
   private items: { [key: string]: Item[] };
   private engine: ROT.Engine;
   private scheduler: Scheduler;
-  private fov: PreciseShadowcasting[];
   private explored: boolean[][][];
-  private audioContext: AudioContext;
-  private playerZ: number;
 
   constructor(tiles: Tile[][][], player: Player) {
     this.tiles = tiles;
-    this.playerZ = 0;
 
     // cache the width and height based
     // on the length of the dimensions of
@@ -35,9 +28,6 @@ export class Map {
     this.depth = tiles.length;
     this.width = tiles[0].length;
     this.height = tiles[0][0]?.length || 0;
-    // setup the field of visions
-    this.fov = [];
-    this.setupFov();
     // create a list which will hold the entities
     this.entities = {};
     // Create a table which will hold the items
@@ -49,7 +39,6 @@ export class Map {
     // add the player
     this.addEntityAtRandomPosition(player, 0);
     // Add random enemies to each floor.
-    const monsters = [createFungus, createBat, createNewt];
     for (let z = 0; z < this.depth; z++) {
       // 15 entities per floor
       if (!Game.EntityRepository.isEmpty()) {
@@ -73,30 +62,6 @@ export class Map {
     // Setup the explored array
     this.explored = new Array(this.depth);
     this.setupExploredArray();
-
-    // setup audioContext
-    this.audioContext = new AudioContext();
-    this.setupAudioContext();
-  }
-
-  private setupAudioContext() {
-    this.audioContext = this.audioContext || new AudioContext();
-    this.audioContext.listener.positionZ.value = 10;
-
-    // mount event
-    MainGame.addEventListener('player_goto', ([x, y, z]) => {
-      const listener = this.audioContext.listener;
-      [listener.positionX.value, listener.positionY.value] = [x, y];
-      this.playerZ = z;
-    });
-  }
-
-  getAudioContext(): AudioContext {
-    return this.audioContext;
-  }
-
-  getPlayerZ(): number {
-    return this.playerZ;
   }
 
   getEngine() {
@@ -143,6 +108,13 @@ export class Map {
   addItemAtRandomPosition(item: Item, z: number) {
     const position = this.getRandomFloorPosition(z);
     this.addItem(position.x, position.y, position.z, item);
+  }
+
+  getAt(x: number, y: number, z: number) {
+    const tile = this.getTile(x, y, z);
+    const entity = this.getEntityAt(x, y, z);
+    const items = this.getItemsAt(x, y, z);
+    return { tile, entity, items };
   }
 
   // Standard getters
@@ -263,29 +235,6 @@ export class Map {
     return results;
   }
 
-  // 计算可视环境的光线强度
-  computeLights(
-    x: number,
-    y: number,
-    z: number,
-    callback?: (x: number, y: number, r: number, visibility: number) => void
-  ) {
-    const DIST = 10;
-    const fov = this.getFov(z);
-    const lights = {} as {
-      [key: string]: number;
-    };
-    const getDist = (x1: number, y1: number, x2: number, y2: number) => {
-      const d = Math.abs(x1 - x2) + Math.abs(y1 - y2);
-      return Math.sqrt(Math.min(1, Math.max(0, 1 - d / DIST)));
-    };
-    fov.compute(x, y, DIST, (x2, y2, r, visibility) => {
-      lights[x2 + ',' + y2] = 0.1 + visibility * getDist(x, y, x2, y2);
-      callback && callback(x2, y2, r, visibility);
-    });
-    return lights;
-  }
-
   updateEntityPosition(
     entity: Entity,
     oldX?: number,
@@ -317,31 +266,6 @@ export class Map {
     }
     // Add the entity to the table of entities
     this.entities[key] = entity;
-  }
-
-  private setupFov() {
-    // Keep this in 'map' variable so that we don't lose it.
-    const map = this;
-    // Iterate through each depth level, setting up the field of vision
-    for (let z = 0; z < this.depth; z++) {
-      // We have to put the following code in it's own scope to prevent the
-      // depth variable from being hoisted out of the loop.
-      (() => {
-        // For each depth, we need to create a callback which figures out
-        // if light can pass through a given tile.
-        const depth = z;
-        map.fov.push(
-          new ROT.FOV.PreciseShadowcasting(
-            (x, y) => !map.getTile(x, y, depth).isBlockingLight(),
-            { topology: 8 }
-          )
-        );
-      })();
-    }
-  }
-
-  getFov(depth: number) {
-    return this.fov[depth];
   }
 
   private setupExploredArray() {

@@ -58,9 +58,12 @@ const AppLayout = React.memo(() => {
               {''}
             </div>
           </div>
-          <BasePanel style={{ height: '15rem' }} title="Logs">
-            <LogsPanel />
-          </BasePanel>
+          <Row style={{ height: '10rem' }}>
+            <BasePanel title="Logs">
+              <LogsPanel />
+            </BasePanel>
+            <BasePanel title="Actions"></BasePanel>
+          </Row>
         </RowColumn>
       </div>
       <div style={{ flex: 2, position: 'relative' }}>
@@ -71,7 +74,6 @@ const AppLayout = React.memo(() => {
           <BasePanel title="Player"></BasePanel>
           <BasePanel title="Weapons"></BasePanel>
           <BasePanel title="Inventory"></BasePanel>
-          <BasePanel title="Actions"></BasePanel>
         </RowColumn>
       </div>
     </div>
@@ -83,6 +85,11 @@ AppLayout.displayName = 'AppLayout';
 const RowColumn = styled.div`
   display: flex;
   flex-direction: column;
+  width: 100%;
+  height: 100%;
+`;
+const Row = styled.div`
+  display: flex;
   width: 100%;
   height: 100%;
 `;

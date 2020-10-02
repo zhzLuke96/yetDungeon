@@ -7,6 +7,18 @@ export const Tiles = {
     walkable: true,
     blocksLight: false,
     describe: '平整的地面，看上去平淡无奇',
+    sounds: [
+      {
+        name: 'floor_trampled',
+        type: 'trampled',
+        audios: [
+          require('./assets/sounds/step/sand1.ogg'),
+          require('./assets/sounds/step/sand2.ogg'),
+          require('./assets/sounds/step/sand3.ogg'),
+          require('./assets/sounds/step/sand4.ogg'),
+        ],
+      },
+    ],
   }),
   wall: new Tile({
     character: '#',

@@ -2,6 +2,7 @@ import { Game, MainGame } from './game';
 import { Item } from './item';
 import { Entity, EntityProperties } from './entity';
 import { AudioSpeaker } from './audioSpeaker';
+import * as ROT from 'rot-js';
 
 type MixinConstructor<T = Entity> = new (...args: any[]) => T;
 
@@ -261,21 +262,83 @@ export function isMessageRecipient(
   return (entity as any).isMessageRecipient;
 }
 
+const d = () => new ROT.FOV.PreciseShadowcasting((x, y) => false, {});
+type PreciseShadowcasting = ReturnType<typeof d>;
+
+const fixed = (n: number, p = 2) =>
+  Math.floor(n * Math.pow(10, p)) / Math.pow(10, p);
 function Sight<TBase extends MixinConstructor>(Base: TBase) {
   return class SightCls extends Base {
     isSight = true;
     private sightRadius: number;
+    private fov: PreciseShadowcasting;
+    private visiblesCells: { [key: string]: number };
+    private lastSightPosition: number[];
+    private sightDIR: number;
 
     constructor(...params: any[]) {
       super(...params);
       this.attachedMixins.Sight = true;
 
-      const { sightRadius = 5 } = params[0] || {};
+      const { sightRadius = 10 } = params[0] || {};
       this.sightRadius = sightRadius;
+
+      this.fov = new ROT.FOV.PreciseShadowcasting(
+        (x, y) => {
+          const map = this.getMap();
+          if (!map) {
+            return false;
+          }
+          // TODO: entity should be block ligths maybe?
+          return !map.getTile(x, y, this.z).isBlockingLight();
+        },
+        { topology: 8 }
+      );
+      this.lastSightPosition = [];
+      this.sightDIR = 0;
+      this.visiblesCells = this.computeVisiblesCells();
+    }
+
+    private canCachedVisibles() {
+      return (
+        this.lastSightPosition[0] === this.x &&
+        this.lastSightPosition[1] === this.y &&
+        this.lastSightPosition[2] === this.z
+      );
+    }
+
+    setSightDIR(dir: number) {
+      this.sightDIR = dir;
     }
 
     getSightRadius() {
       return this.sightRadius;
+    }
+
+    computeVisiblesCells(
+      callback?: (x: number, y: number, r: number, visibility: number) => void
+    ) {
+      if (this.canCachedVisibles()) {
+        return this.visiblesCells;
+      }
+      this.lastSightPosition = [this.x, this.y, this.z];
+      const { x, y } = this;
+      const DIST = this.sightRadius;
+      const fov = this.fov;
+      const lights = {} as {
+        [key: string]: number;
+      };
+      const getDist = (x1: number, y1: number, x2: number, y2: number) => {
+        const d = Math.abs(x1 - x2) + Math.abs(y1 - y2);
+        return Math.sqrt(Math.min(1, Math.max(0, 1 - d / DIST)));
+      };
+      // fov.compute90(x, y, DIST, this.sightDIR, (x2, y2, r, visibility) => {
+      fov.compute(x, y, DIST, (x2, y2, r, visibility) => {
+        lights[x2 + ',' + y2] = fixed(0.1 + visibility * getDist(x, y, x2, y2));
+        callback && callback(x2, y2, r, visibility);
+      });
+      this.visiblesCells = lights;
+      return lights;
     }
   };
 }
@@ -415,40 +478,6 @@ export function isInventoryHolder(
   return (entity as any).isInventoryHolder;
 }
 
-function WalkSpeaker<TBase extends MixinConstructor>(Base: TBase) {
-  return class SpeakerCls extends Base {
-    isSpeaker = true;
-    private speaker: AudioSpeaker | null;
-
-    constructor(...params: any[]) {
-      super(...params);
-      this.attachedMixins.Speaker = true;
-      this.attachedMixinGroups.Speaker = true;
-
-      const { walkAudios = [] as string[] } = params[0] || {};
-      this.speaker = null;
-
-      this.addEventListener('moved', ([x, y, z]) => {
-        const ctx = this.getMap()?.getAudioContext();
-        if (!ctx) {
-          return;
-        }
-        if (!this.speaker) {
-          this.speaker = new AudioSpeaker(walkAudios, ctx);
-        }
-        this.speaker.playRandomAt(x, y);
-      });
-    }
-  };
-}
-
-const WalkSpeakerEntityFn = () => new (WalkSpeaker(Entity))({});
-type WalkSpeakerEntity = ReturnType<typeof WalkSpeakerEntityFn>;
-
-export function isWalkSpeaker(entity: Entity): entity is WalkSpeakerEntity {
-  return (entity as any).isWalkSpeaker;
-}
-
 // ================================
 
 export const Mixins = {
@@ -460,5 +489,4 @@ export const Mixins = {
   MessageRecipient,
   Sight,
   InventoryHolder,
-  WalkSpeaker,
 };

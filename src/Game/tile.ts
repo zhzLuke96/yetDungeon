@@ -1,9 +1,18 @@
 import { Glyph, GlyphProperties } from './glyph';
+import { MainSoundEngine } from './soundEngine';
+
+interface SoundsInfo {
+  name: string; // speaker name
+  type: string; // mount event name
+  audios: string[]; // audio paths
+}
 
 export interface TileProperties extends GlyphProperties {
   diggable?: boolean;
   walkable?: boolean;
   blocksLight?: boolean;
+
+  sounds?: SoundsInfo[];
 }
 
 export class Tile extends Glyph {
@@ -18,6 +27,8 @@ export class Tile extends Glyph {
     this._isWalkable = properties.walkable || false;
     this._isBlockingLight =
       properties.blocksLight !== undefined ? properties.blocksLight : true;
+
+    this.setupSoundEvents(properties.sounds);
   }
 
   isDiggable() {
@@ -30,5 +41,14 @@ export class Tile extends Glyph {
 
   isBlockingLight() {
     return this._isBlockingLight;
+  }
+
+  setupSoundEvents(sounds?: SoundsInfo[]) {
+    if (!sounds) {
+      return;
+    }
+    sounds.forEach(({ name, type, audios }) => {
+      MainSoundEngine.listenRandomOn(this, type, { name, audios });
+    });
   }
 }

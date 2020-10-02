@@ -17,6 +17,8 @@ import { PlayScreen } from './screens/playScreen';
 import { WinScreen } from './screens/winScreen';
 import { Tiles } from './tiles';
 
+import './ECS/ECS';
+
 const startScreen = new StartScreen();
 const playScreen = new PlayScreen();
 const loseScreen = new LoseScreen();

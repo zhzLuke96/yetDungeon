@@ -1,11 +1,16 @@
 // web audio
 
+import { TypelessEvent } from './typelessEvent';
+
 interface AudioProperty {
   path: string;
   name: string;
   maxVolume: number; // 0 ~ 1
 }
 
+// TODO: 由于不是实时游戏，音效应该做一个限制，一定时间一个speaker只播放一次，不然会鬼畜
+
+// TODO: 隔墙音效，搁着实体应该也可以听到声音
 export class AudioSpeaker {
   private sources: AudioBuffer[];
   private ctx: AudioContext;
@@ -45,7 +50,9 @@ export class AudioSpeaker {
       return;
     }
     // no problem with electron.
-    this.panner.setPosition(soundX, soundY, soundZ);
+    this.panner.positionX.value = soundX;
+    this.panner.positionY.value = soundY;
+    this.panner.positionZ.value = soundZ;
     const buffer = this.getAudio(playIdx);
     this.processAudio(buffer);
   }
