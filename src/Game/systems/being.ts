@@ -6,6 +6,7 @@ import * as ROT from 'rot-js';
 import { GameMap } from '../map';
 import { Game, MainGame } from '../game';
 import { GlobalSounds } from '../sounds';
+import { getRandomArrayElements } from '../utils';
 
 class DestructibleSystem extends ECS.System<{
   hp: number;
@@ -54,6 +55,7 @@ class PlayerSystem extends ECS.System<null> {
     const { hp } = entity.getComponent(destructibleSystem)!;
     if (hp <= 0) {
       // game over
+      MainGame.dispatchEvent('goto_lose_screen');
     }
   }
 
@@ -426,3 +428,71 @@ export const inventoryHolderActions = {
     }
   },
 };
+
+class BatSystem extends ECS.System<null> {
+  mountEntity(entity: ECS.Entity) {
+    entity.addEventListener('damaged', () => {
+      const { x, y, z } = entity.getComponent(positionSystem)!;
+      GlobalSounds.batHurtSound(x, y, z);
+    });
+    entity.addEventListener('@DestructibleSystem/death', () => {
+      const { x, y, z } = entity.getComponent(positionSystem)!;
+      GlobalSounds.batDeathSound(x, y, z);
+    });
+  }
+
+  update(entities: ECS.Entity[], ctx: any) {
+    entities.forEach((entity) => {
+      if (Math.random() * 100 > 10) {
+        return;
+      }
+      const { x, y, z } = entity.getComponent(positionSystem)!;
+      GlobalSounds.batIdleSound(x, y, z);
+    });
+  }
+}
+export const batSystem = new BatSystem();
+
+class BigSlimeSystem extends ECS.System<null> {
+  mountEntity(entity: ECS.Entity) {
+    entity.addEventListener('damaged', () => {
+      const { x, y, z } = entity.getComponent(positionSystem)!;
+      GlobalSounds.bigSlimeSound(x, y, z);
+    });
+    entity.addEventListener('@DestructibleSystem/death', () => {
+      const { x, y, z } = entity.getComponent(positionSystem)!;
+      GlobalSounds.slimeSound(x, y, z);
+
+      const smalls = getRandomArrayElements(
+        [...ROT.DIRS[8], [0, 0]],
+        3
+      ).map(([x1, y1]) => [x + x1, y + y1]);
+
+      for (const [x1, y1] of smalls) {
+        const smallSlime = Game.BeingRepository.create('SmallSlime')!;
+        smallSlime?.updateComponent(positionSystem, { x: x1, y: y1, z });
+      }
+    });
+    entity.addEventListener('moveto', (x: number, y: number, z: number) => {
+      GlobalSounds.bigSlimeSound(x, y, z);
+    });
+  }
+}
+export const bigSlimeSystem = new BigSlimeSystem();
+
+class SmallSlimeSystem extends ECS.System<null> {
+  mountEntity(entity: ECS.Entity) {
+    entity.addEventListener('damaged', () => {
+      const { x, y, z } = entity.getComponent(positionSystem)!;
+      GlobalSounds.smallSlimeSound(x, y, z);
+    });
+    entity.addEventListener('@DestructibleSystem/death', () => {
+      const { x, y, z } = entity.getComponent(positionSystem)!;
+      GlobalSounds.slimeSound(x, y, z);
+    });
+    entity.addEventListener('moveto', (x: number, y: number, z: number) => {
+      GlobalSounds.smallSlimeSound(x, y, z);
+    });
+  }
+}
+export const smallSlimeSystem = new SmallSlimeSystem();

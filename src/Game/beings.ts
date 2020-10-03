@@ -13,6 +13,9 @@ import {
   perceptionSystem,
   playerSystem,
   sightSystem,
+  batSystem,
+  bigSlimeSystem,
+  smallSlimeSystem,
 } from './systems/being';
 import { messageLoggerSystem } from './systems/player';
 
@@ -43,7 +46,7 @@ export const createPlayer = () =>
     },
     {
       system: attackSystem,
-      params: [10],
+      params: [5],
     },
     {
       system: perceptionSystem,
@@ -94,6 +97,7 @@ BeingRepository.define(
 BeingRepository.define(
   'Bat',
   new ECS.Assemblages([
+    { system: batSystem, params: [] },
     {
       system: descriptibleSystem,
       params: ['Bat', '🦇蝙蝠，没什么攻击性'],
@@ -104,7 +108,7 @@ BeingRepository.define(
     },
     {
       system: destructibleSystem,
-      params: [3, 3],
+      params: [10, 10],
     },
     {
       system: attackSystem,
@@ -138,6 +142,68 @@ BeingRepository.define(
     {
       system: attackSystem,
       params: [4],
+    },
+    {
+      system: movementSystem,
+      params: ['random'],
+    },
+    {
+      system: perceptionSystem,
+      params: [],
+    },
+  ])
+);
+
+BeingRepository.define(
+  'BigSlime',
+  new ECS.Assemblages([
+    { system: bigSlimeSystem, params: [] },
+    {
+      system: descriptibleSystem,
+      params: ['BigSlime', '大型史莱姆'],
+    },
+    {
+      system: appearanceSystem,
+      params: ['O', 'green'],
+    },
+    {
+      system: destructibleSystem,
+      params: [15, 15],
+    },
+    {
+      system: attackSystem,
+      params: [4],
+    },
+    {
+      system: movementSystem,
+      params: ['random'],
+    },
+    {
+      system: perceptionSystem,
+      params: [],
+    },
+  ])
+);
+
+BeingRepository.define(
+  'SmallSlime',
+  new ECS.Assemblages([
+    { system: smallSlimeSystem, params: [] },
+    {
+      system: descriptibleSystem,
+      params: ['SmallSlime', '小型史莱姆'],
+    },
+    {
+      system: appearanceSystem,
+      params: ['o', 'green'],
+    },
+    {
+      system: destructibleSystem,
+      params: [5, 5],
+    },
+    {
+      system: attackSystem,
+      params: [1],
     },
     {
       system: movementSystem,

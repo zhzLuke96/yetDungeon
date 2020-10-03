@@ -77,6 +77,7 @@ export const tryMove = (
   }
   if (walkable) {
     tile.dispatchEvent('trampled', entity);
+    entity.dispatchEvent('moveto', x, y, z);
     const old = entity.getComponent(positionSystem)!;
     playFloorSound(tile, old.x, old.y, old.z);
     entity.updateComponent(positionSystem, { x, y, z });
