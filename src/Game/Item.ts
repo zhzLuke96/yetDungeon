@@ -1,5 +1,11 @@
+import ECS from './ECS';
 import { Glyph, GlyphProperties } from './glyph';
 import { Repository } from './repository';
+import {
+  appearanceSystem,
+  descriptibleSystem,
+  itemSystem,
+} from './systems/besic';
 
 interface ItemProperties extends GlyphProperties {
   name?: string;
@@ -31,19 +37,41 @@ export class Item extends Glyph {
 
 export const ItemRepository = new Repository(
   'items',
-  (properties: ItemProperties) => new Item(properties)
+  (itemAssemblages: ECS.Assemblages) => itemAssemblages.createInstance()
 );
 
-ItemRepository.define('apple', {
-  name: 'apple',
-  character: '%',
-  foreground: 'red',
-  describe: '🍎苹果，吃了可以饱腹',
-});
+ItemRepository.define(
+  'apple',
+  new ECS.Assemblages([
+    {
+      system: itemSystem,
+      params: ['apple'],
+    },
+    {
+      system: appearanceSystem,
+      params: ['%', 'red'],
+    },
+    {
+      system: descriptibleSystem,
+      params: ['apple', '🍎苹果，吃了可以饱腹'],
+    },
+  ])
+);
 
-ItemRepository.define('rock', {
-  name: 'rock',
-  character: '*',
-  foreground: 'white',
-  describe: '一块小石头',
-});
+ItemRepository.define(
+  'apple',
+  new ECS.Assemblages([
+    {
+      system: itemSystem,
+      params: ['rock'],
+    },
+    {
+      system: appearanceSystem,
+      params: ['*', 'white'],
+    },
+    {
+      system: descriptibleSystem,
+      params: ['rock', '一块小石头'],
+    },
+  ])
+);

@@ -3,7 +3,7 @@ import { TypelessEvent } from './typelessEvent';
 import { Screen } from './screens/screen';
 import './bindEvents';
 import { Entity } from './entity';
-import { EntityRepository } from './entities';
+import { BeingRepository } from './beings';
 import { isMessageRecipient, isPlayerActor } from './mixins';
 import { Map } from './map';
 import { Tile } from './tile';
@@ -16,8 +16,7 @@ import { StartScreen } from './screens/startScreen';
 import { PlayScreen } from './screens/playScreen';
 import { WinScreen } from './screens/winScreen';
 import { Tiles } from './tiles';
-
-import './ECS/ECS';
+import ECS from './ECS';
 
 const startScreen = new StartScreen();
 const playScreen = new PlayScreen();
@@ -34,7 +33,7 @@ export class Game extends TypelessEvent {
     winScreen,
   };
 
-  static EntityRepository = EntityRepository;
+  static BeingRepository = BeingRepository;
   static ItemRepository = ItemRepository;
 
   private display: ROT.Display;
@@ -79,6 +78,8 @@ export class Game extends TypelessEvent {
     // initialization currentScreen
     this.currentScreen = startScreen;
     this.switchScreen(startScreen);
+
+    ECS.MainWorld.setVal('display', this.display);
   }
 
   refresh() {
@@ -120,47 +121,6 @@ export class Game extends TypelessEvent {
     if (!this.currentScreen !== null) {
       this.currentScreen.enter();
       this.refresh();
-    }
-  }
-
-  static sendMessage(
-    recipient: Entity,
-    messager: (...args: any) => string,
-    args: any[] = []
-  ) {
-    // Make sure the recipient can receive the message
-    // before doing any work.
-    if (isMessageRecipient(recipient)) {
-      // If args were passed, then we format the message, else
-      // no formatting is necessary
-      const msg = messager(...args);
-      recipient.receiveMessage(msg);
-      MainGame.dispatchEvent('sendMessage', msg);
-    }
-  }
-
-  static sendMessageNearby(
-    map: Map,
-    centerX: number,
-    centerY: number,
-    centerZ: number,
-    messager: (...args: any) => string,
-    args: any[] = []
-  ) {
-    // If args were passed, then we format the message, else
-    // no formatting is necessary
-    const message = messager(...args);
-    // Get the nearby entities
-    const entities = map.getEntitiesWithinRadius(centerX, centerY, centerZ, 5);
-    // Iterate through nearby entities, sending the message if
-    // they can receive it.
-    for (const entity of entities) {
-      if (isMessageRecipient(entity)) {
-        entity.receiveMessage(message);
-        if (isPlayerActor(entity)) {
-          MainGame.dispatchEvent('sendMessageNearby', message);
-        }
-      }
     }
   }
 

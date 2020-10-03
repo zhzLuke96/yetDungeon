@@ -46,4 +46,8 @@ export class TypelessEvent {
       }
     }
   }
+
+  clearListeners() {
+    this.handlers = {};
+  }
 }

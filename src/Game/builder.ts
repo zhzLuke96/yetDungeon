@@ -1,13 +1,14 @@
 import * as ROT from 'rot-js';
+import ECS from './ECS';
 import { Game } from './game';
+import { tileSystem } from './systems/besic';
 import { shuffle } from './utils';
-import { Tile } from './tile';
 
 export class Builder {
   private width: number;
   private height: number;
   private depth: number;
-  private tiles: Tile[][][];
+  private tiles: ECS.Entity[][][];
   private regions: number[][][];
 
   constructor(width: number, height: number, depth: number) {
@@ -56,7 +57,7 @@ export class Builder {
 
   private generateLevel() {
     // Create the empty map
-    const map = new Array<Tile[]>(this.width);
+    const map = new Array<ECS.Entity[]>(this.width);
     for (let w = 0; w < this.width; w++) {
       map[w] = new Array(this.height);
     }
@@ -95,8 +96,9 @@ export class Builder {
     if (this.regions[z][x][y] !== 0) {
       return false;
     }
+    const { walkable } = this.tiles[z][x][y].getComponent(tileSystem)!;
     // Make sure the tile is walkable
-    return this.tiles[z][x][y].isWalkable();
+    return walkable;
   }
 
   private fillRegion(region: number, x: number, y: number, z: number) {

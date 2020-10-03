@@ -1,25 +1,27 @@
-import { Tile } from './tile';
 import * as ROT from 'rot-js';
-import { Entity } from './entity';
-import { createBat, createFungus, createNewt, Player } from './entities';
 import { Game, MainGame } from './game';
-import { Item } from './Item';
+import ECS from './ECS';
+import { positionSystem, tileSystem } from './systems/besic';
 
 const s = () => new ROT.Scheduler.Simple();
 type Scheduler = ReturnType<typeof s>;
+
+type Tile = ECS.Entity;
+type Item = ECS.Entity;
+type Being = ECS.Entity;
 
 export class Map {
   private tiles: Tile[][][];
   private width: number;
   private height: number;
   private depth: number;
-  private entities: { [key: string]: Entity };
+  private beings: { [key: string]: Being };
   private items: { [key: string]: Item[] };
   private engine: ROT.Engine;
   private scheduler: Scheduler;
   private explored: boolean[][][];
 
-  constructor(tiles: Tile[][][], player: Player) {
+  constructor(tiles: Tile[][][], player: ECS.Entity) {
     this.tiles = tiles;
 
     // cache the width and height based
@@ -29,7 +31,7 @@ export class Map {
     this.width = tiles[0].length;
     this.height = tiles[0][0]?.length || 0;
     // create a list which will hold the entities
-    this.entities = {};
+    this.beings = {};
     // Create a table which will hold the items
     this.items = {};
     // create the engine and scheduler
@@ -37,15 +39,15 @@ export class Map {
     this.engine = new ROT.Engine(this.scheduler);
 
     // add the player
-    this.addEntityAtRandomPosition(player, 0);
+    this.addBeingAtRandomPosition(player, 0);
     // Add random enemies to each floor.
     for (let z = 0; z < this.depth; z++) {
       // 15 entities per floor
-      if (!Game.EntityRepository.isEmpty()) {
+      if (!Game.BeingRepository.isEmpty()) {
         for (let i = 0; i < 15; i++) {
-          // Add a random entity
-          this.addEntityAtRandomPosition(
-            Game.EntityRepository.createRandom()!,
+          // Add a random being
+          this.addBeingAtRandomPosition(
+            Game.BeingRepository.createRandom()!,
             z
           );
         }
@@ -53,7 +55,7 @@ export class Map {
       if (!Game.ItemRepository.isEmpty()) {
         // 10 items per floor
         for (let i = 0; i < 15; i++) {
-          // Add a random entity
+          // Add a random being
           this.addItemAtRandomPosition(Game.ItemRepository.createRandom()!, z);
         }
       }
@@ -68,13 +70,13 @@ export class Map {
     return this.engine;
   }
 
-  getEntities() {
-    return this.entities;
+  getBeings() {
+    return this.beings;
   }
 
-  getEntityAt(x: number, y: number, z: number): Entity | null {
-    // Get the entity based on position key
-    return this.entities[x + ',' + y + ',' + z] || null;
+  getBeingAt(x: number, y: number, z: number): Being | null {
+    // Get the being based on position key
+    return this.beings[x + ',' + y + ',' + z] || null;
   }
 
   getItemsAt(x: number, y: number, z: number) {
@@ -112,9 +114,9 @@ export class Map {
 
   getAt(x: number, y: number, z: number) {
     const tile = this.getTile(x, y, z);
-    const entity = this.getEntityAt(x, y, z);
+    const being = this.getBeingAt(x, y, z);
     const items = this.getItemsAt(x, y, z);
-    return { tile, entity, items };
+    return { tile, being, items };
   }
 
   // Standard getters
@@ -149,8 +151,10 @@ export class Map {
   }
 
   dig(x: number, y: number, z: number) {
+    const tile = this.getTile(x, y, z);
     // If the tile is diggable, update it to a floor
-    if (this.getTile(x, y, z).isDiggable()) {
+    const { diggable } = tile.getComponent(tileSystem)!;
+    if (diggable) {
       this.tiles[z][x][y] = Game.Tiles.floor;
     }
   }
@@ -170,40 +174,31 @@ export class Map {
     return { x, y, z };
   }
 
-  addEntity(entity: Entity) {
-    // Update the entity's map
-    entity.setMap(this);
-    // Update the map with the entity's position
-    this.updateEntityPosition(entity);
-    // Check if this entity is an actor, and if so add
-    // them to the scheduler
-    if (entity.hasMixin('Actor')) {
-      this.scheduler.add(entity, true);
-    }
+  addBeing(being: Being) {
+    // Update the map with the being's position
+    this.updateBeingPosition(being);
   }
 
-  addEntityAtRandomPosition(entity: Entity, z: number) {
+  addBeingAtRandomPosition(being: Being, z: number) {
     const { x, y } = this.getRandomFloorPosition(z);
-    entity.setPosition(x, y, z);
-    this.addEntity(entity);
+    being.updateComponent(positionSystem, { x, y, z });
+    this.addBeing(being);
   }
 
-  removeEntity(entity: Entity) {
-    // Remove the entity from the map
-    const key = entity.getX() + ',' + entity.getY() + ',' + entity.getZ();
-    if (this.entities[key] === entity) {
-      delete this.entities[key];
+  removeBeing(being: Being) {
+    const { x, y, z } = being.getComponent(positionSystem)!;
+    // Remove the being from the map
+    const key = x + ',' + y + ',' + z;
+    if (this.beings[key] === being) {
+      delete this.beings[key];
     }
-    // If the entity is an actor, remove them from the scheduler
-    if (entity.hasMixin('Actor')) {
-      this.scheduler.remove(entity);
-    }
+    ECS.MainWorld.destroyEntity(being);
   }
 
   isEmptyFloor(x: number, y: number, z: number) {
-    // Check if the tile is floor and also has no entity
+    // Check if the tile is floor and also has no being
     return (
-      this.getTile(x, y, z) === Game.Tiles.floor && !this.getEntityAt(x, y, z)
+      this.getTile(x, y, z) === Game.Tiles.floor && !this.getBeingAt(x, y, z)
     );
   }
 
@@ -213,59 +208,61 @@ export class Map {
     centerZ: number,
     radius: number
   ) {
-    const results = [] as Entity[];
+    const results = [] as Being[];
     // Determine our bounds
     const leftX = centerX - radius;
     const rightX = centerX + radius;
     const topY = centerY - radius;
     const bottomY = centerY + radius;
-    // Iterate through our entities, adding any which are within the bounds
-    for (const key in this.entities) {
-      const entity = this.entities[key];
+    // Iterate through our beings, adding any which are within the bounds
+    for (const key in this.beings) {
+      const being = this.beings[key];
+      const { x, y, z } = being.getComponent(positionSystem)!;
       if (
-        entity.getX() >= leftX &&
-        entity.getX() <= rightX &&
-        entity.getY() >= topY &&
-        entity.getY() <= bottomY &&
-        entity.getZ() === centerZ
+        x >= leftX &&
+        x <= rightX &&
+        y >= topY &&
+        y <= bottomY &&
+        z === centerZ
       ) {
-        results.push(entity);
+        results.push(being);
       }
     }
     return results;
   }
 
-  updateEntityPosition(
-    entity: Entity,
+  updateBeingPosition(
+    being: Being,
     oldX?: number,
     oldY?: number,
     oldZ?: number
   ) {
-    // Delete the old key if it is the same entity and we have old positions.
+    // Delete the old key if it is the same being and we have old positions.
     if (typeof oldX !== 'undefined') {
       const oldKey = oldX + ',' + oldY + ',' + oldZ;
-      if (this.entities[oldKey] === entity) {
-        delete this.entities[oldKey];
+      if (this.beings[oldKey] === being) {
+        delete this.beings[oldKey];
       }
     }
-    // Make sure the entity's position is within bounds
+    const { x, y, z } = being.getComponent(positionSystem)!;
+    // Make sure the being's position is within bounds
     if (
-      entity.getX() < 0 ||
-      entity.getX() >= this.width ||
-      entity.getY() < 0 ||
-      entity.getY() >= this.height ||
-      entity.getZ() < 0 ||
-      entity.getZ() >= this.depth
+      x < 0 ||
+      x >= this.width ||
+      y < 0 ||
+      y >= this.height ||
+      z < 0 ||
+      z >= this.depth
     ) {
-      throw new Error("Entity's position is out of bounds.");
+      throw new Error("being's position is out of bounds.");
     }
-    // Sanity check to make sure there is no entity at the new position.
-    const key = entity.getX() + ',' + entity.getY() + ',' + entity.getZ();
-    if (this.entities[key]) {
-      throw new Error('Tried to add an entity at an occupied position.');
+    // Sanity check to make sure there is no being at the new position.
+    const key = x + ',' + y + ',' + z;
+    if (this.beings[key]) {
+      throw new Error('Tried to add an being at an occupied position.');
     }
-    // Add the entity to the table of entities
-    this.entities[key] = entity;
+    // Add the being to the table of beings
+    this.beings[key] = being;
   }
 
   private setupExploredArray() {

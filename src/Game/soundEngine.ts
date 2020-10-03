@@ -1,5 +1,5 @@
 import { AudioSpeaker } from './audioSpeaker';
-import { Player } from './entities';
+import { Player } from './beings';
 import { Entity } from './entity';
 import { TypelessEvent } from './typelessEvent';
 

@@ -5,6 +5,9 @@ module.exports = {
     '@babel/preset-typescript',
   ],
   plugins: [
+    ['@babel/plugin-transform-typescript', {
+      allowNamespaces: true
+    }],
     '@babel/plugin-proposal-class-properties',
     '@babel/plugin-transform-regenerator',
     '@babel/plugin-transform-async-to-generator',
