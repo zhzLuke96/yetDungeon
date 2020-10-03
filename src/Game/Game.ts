@@ -2,13 +2,9 @@ import * as ROT from 'rot-js';
 import { TypelessEvent } from './typelessEvent';
 import { Screen } from './screens/screen';
 import './bindEvents';
-import { Entity } from './entity';
 import { BeingRepository } from './beings';
-import { isMessageRecipient, isPlayerActor } from './mixins';
-import { Map } from './map';
-import { Tile } from './tile';
 import { shuffle } from './utils';
-import { ItemRepository } from './Item';
+import { ItemRepository } from './item';
 import * as _ from 'lodash';
 
 import { LoseScreen } from './screens/loseScreen';

@@ -10,7 +10,7 @@ type Tile = ECS.Entity;
 type Item = ECS.Entity;
 type Being = ECS.Entity;
 
-export class Map {
+export class GameMap {
   private tiles: Tile[][][];
   private width: number;
   private height: number;

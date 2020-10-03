@@ -1,5 +1,7 @@
-import { AudioSpeaker } from './audioSpeaker';
-import { Player } from './beings';
+import { AudioSource } from './audioSpeaker';
+import ECS from './ECS';
+import { sightSystem } from './systems/being';
+import { positionSystem } from './systems/besic';
 import { TypelessEvent } from './typelessEvent';
 
 const DISTANCE_MULTIP = 10000;
@@ -10,9 +12,9 @@ interface SpeakerProperty {
 }
 
 class SoundEngine {
-  private speakers: { [name: string]: AudioSpeaker };
+  private speakers: { [name: string]: AudioSource };
   private audioCtx: AudioContext;
-  private player: Player | null;
+  private player: ECS.Entity | null;
 
   constructor() {
     this.speakers = {};
@@ -24,7 +26,7 @@ class SoundEngine {
     return this.audioCtx;
   }
 
-  setPlayer(player: Player) {
+  setPlayer(player: ECS.Entity) {
     this.player = player;
   }
 
@@ -39,7 +41,7 @@ class SoundEngine {
 
   getSpeaker({ name, audios }: SpeakerProperty) {
     if (!this.speakers[name]) {
-      this.speakers[name] = new AudioSpeaker(audios, this.audioCtx);
+      this.speakers[name] = new AudioSource(audios, this.audioCtx);
     }
     return this.speakers[name];
   }
@@ -48,10 +50,11 @@ class SoundEngine {
     if (!this.player) {
       return false;
     }
-    if (z !== this.player.getZ()) {
+    const playerP = this.player.getComponent(positionSystem)!;
+    if (z !== playerP.z) {
       return false;
     }
-    const visibleCells = this.player.computeVisiblesCells();
+    const { visibleCells } = this.player.getComponent(sightSystem)!;
     return !!visibleCells[`${x},${y}`];
   }
 

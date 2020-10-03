@@ -1,10 +1,9 @@
 import * as ROT from 'rot-js';
 import { Game, MainGame } from '../game';
 import { createPlayer } from '../beings';
-import { Map } from '../map';
+import { GameMap } from '../map';
 import { Screen } from './screen';
 import { Builder } from '../builder';
-import { Glyph } from '../glyph';
 import { MainSoundEngine } from '../soundEngine';
 import ECS from '../ECS';
 import { positionSystem } from '../systems/besic';
@@ -19,7 +18,7 @@ const PlayScreenConfig = {
 };
 
 export class PlayScreen implements Screen {
-  private map = null as null | Map;
+  private map = null as null | GameMap;
   private player = null as null | ECS.Entity;
   private gameOver = false;
 
@@ -29,12 +28,12 @@ export class PlayScreen implements Screen {
     // Create our map from the tiles and player
     const tiles = new Builder(mapWidth, mapHeight, mapDepth).getTiles();
     this.player = createPlayer();
-    this.map = new Map(tiles, this.player);
+    this.map = new GameMap(tiles, this.player);
     // this.map = new Game.Map(map, this.player);
     // Start the map's engine
     this.map.getEngine().start();
 
-    // MainSoundEngine.setPlayer(this.player);
+    MainSoundEngine.setPlayer(this.player);
 
     // init World context
     ECS.MainWorld.setVal('map', this.map);

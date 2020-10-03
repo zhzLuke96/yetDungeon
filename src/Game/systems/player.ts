@@ -1,4 +1,3 @@
-import { AudioSpeaker } from '../audioSpeaker';
 import ECS from '../ECS';
 import { MainGame } from '../game';
 import { descriptibleSystem } from './besic';

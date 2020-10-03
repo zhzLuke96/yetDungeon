@@ -1,10 +1,9 @@
-import { AudioSpeaker } from '../audioSpeaker';
 import ECS from '../ECS';
 import { MainSoundEngine } from '../soundEngine';
 import { appearanceSystem, positionSystem, tileSystem } from './besic';
 import { broadcastMessage, canPerception, tryMove } from './utils';
 import * as ROT from 'rot-js';
-import { Map as GameMap } from '../map';
+import { GameMap } from '../map';
 import { Game, MainGame } from '../game';
 
 class DestructibleSystem extends ECS.System<{
@@ -103,40 +102,6 @@ class PerceptionSystem extends ECS.System<{ radius: number }> {
 }
 export const perceptionSystem = new PerceptionSystem();
 
-class SoundSystem extends ECS.System<{ type: string; speaker: AudioSpeaker }> {
-  createComponent(
-    type: string,
-    speakerOptions: { name: string; audios: string[] }
-  ) {
-    const speaker = MainSoundEngine.getSpeaker(speakerOptions);
-    return {
-      type,
-      speaker,
-    };
-  }
-
-  mountEntity(
-    entity: ECS.Entity,
-    { type, speaker } = {} as { type: string; speaker: AudioSpeaker }
-  ) {
-    if (!type || !speaker) {
-      return;
-    }
-    entity.addEventListener(type, (listener: ECS.Entity) => {
-      const isPlayer = listener.hasSystem(playerSystem);
-      if (!isPlayer) {
-        return listener.dispatchEvent('@SoundSystem/hear', entity);
-      }
-      // if listener is player
-      if (canPerception(listener, entity)) {
-        const { x, y } = entity.getComponent(positionSystem)!;
-        speaker.playRandomAt(x, y);
-      }
-    });
-  }
-}
-export const soundSystem = new SoundSystem();
-
 const fixed = (n: number, p = 2) =>
   Math.floor(n * Math.pow(10, p)) / Math.pow(10, p);
 
@@ -169,7 +134,7 @@ class SightSystem extends ECS.System<{
       'fov',
       new ROT.FOV.PreciseShadowcasting(
         (x, y) => {
-          const map = ECS.MainWorld.getVal('map') as Map | null;
+          const map = ECS.MainWorld.getVal('map') as GameMap | null;
           if (!map) {
             return false;
           }
@@ -395,7 +360,7 @@ export const inventoryHolderActions = {
     if (!entity.hasSystem(inventoryHolderSystem)) {
       return false;
     }
-    const map = ECS.MainWorld.getVal('map') as Map;
+    const map = ECS.MainWorld.getVal('map') as GameMap;
     if (!map) {
       // TODO: Error manage
       return;
@@ -432,7 +397,7 @@ export const inventoryHolderActions = {
     if (!entity.hasSystem(inventoryHolderSystem)) {
       return;
     }
-    const map = ECS.MainWorld.getVal('map') as Map;
+    const map = ECS.MainWorld.getVal('map') as GameMap;
     if (!map) {
       // TODO: Error manage
       return;

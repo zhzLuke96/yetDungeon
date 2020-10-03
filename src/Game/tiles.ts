@@ -1,5 +1,4 @@
 import ECS from './ECS';
-import { soundSystem } from './systems/being';
 import {
   tileSystem,
   appearanceSystem,
@@ -41,44 +40,14 @@ const createTile = ({
     },
   ]);
 
-interface soundProps {
-  type: string;
-  speakerOptions: { name: string; audios: string[] };
-}
-const extendsSound = (
-  assemblages: ECS.Assemblages,
-  ...sounds: soundProps[]
-) => {
-  return assemblages.extends(
-    sounds.map(({ type, speakerOptions }) => ({
-      system: soundSystem,
-      params: [type, speakerOptions],
-    }))
-  );
-};
-
 export const Tiles = {
   null: createTile().createInstance(),
-  floor: extendsSound(
-    createTile({
-      ch: '.',
-      diggable: false,
-      walkable: true,
-      blocksLight: false,
-    }),
-    {
-      type: 'trampled',
-      speakerOptions: {
-        name: 'step_floor',
-        audios: [
-          require('./assets/sounds/step/sand1.ogg'),
-          require('./assets/sounds/step/sand2.ogg'),
-          require('./assets/sounds/step/sand3.ogg'),
-          require('./assets/sounds/step/sand4.ogg'),
-        ],
-      },
-    }
-  ).createInstance(),
+  floor: createTile({
+    ch: '.',
+    diggable: false,
+    walkable: true,
+    blocksLight: false,
+  }).createInstance(),
   wall: createTile({
     ch: '#',
     fg: 'goldenrod',

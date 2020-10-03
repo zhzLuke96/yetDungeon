@@ -6,7 +6,7 @@ import {
   playerSystem,
 } from './being';
 import { positionSystem, tileSystem } from './besic';
-import { Map } from '../map';
+import { GameMap } from '../map';
 import { Game } from '../game';
 
 export const canPerception = (self: ECS.Entity, target: ECS.Entity) => {
@@ -41,7 +41,7 @@ export const tryMove = (
   y: number,
   z: number
 ) => {
-  const map = ECS.MainWorld.getVal('map') as Map | null;
+  const map = ECS.MainWorld.getVal('map') as GameMap | null;
   if (!map) {
     return;
   }
