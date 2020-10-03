@@ -1,7 +1,7 @@
 import ECS from '../ECS';
 import * as ROT from 'rot-js';
 import { Game, MainGame } from '../game';
-import { Map as GameMap } from '../map';
+import { GameMap } from '../map';
 import { destructibleSystem, sightSystem } from './being';
 import { appearanceSystem, descriptibleSystem, positionSystem } from './besic';
 

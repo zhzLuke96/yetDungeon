@@ -76,10 +76,14 @@ export const tryMove = (
     return map.dig(x, y, z);
   }
   if (walkable) {
-    tile.dispatchEvent('trampled', entity);
-    entity.dispatchEvent('moveto', x, y, z);
     const old = entity.getComponent(positionSystem)!;
-    playFloorSound(tile, old.x, old.y, old.z);
+    if (items.length !== 0) {
+      GlobalSounds.clothSound(old.x, old.y, old.z);
+    } else {
+      tile.dispatchEvent('trampled', entity);
+      entity.dispatchEvent('moveto', x, y, z);
+      playFloorSound(tile, old.x, old.y, old.z);
+    }
     entity.updateComponent(positionSystem, { x, y, z });
     return map.updateBeingPosition(entity, old.x, old.y, old.z);
   }

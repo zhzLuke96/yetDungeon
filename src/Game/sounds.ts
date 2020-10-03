@@ -84,4 +84,13 @@ export const GlobalSounds = {
       require('./assets/sounds/mob/slime/small4.ogg'),
     ],
   }),
+  clothSound: MainSoundEngine.createTrigger({
+    name: 'clothSound',
+    audios: [
+      require('./assets/sounds/step/cloth1.ogg'),
+      require('./assets/sounds/step/cloth2.ogg'),
+      require('./assets/sounds/step/cloth3.ogg'),
+      require('./assets/sounds/step/cloth4.ogg'),
+    ],
+  }),
 };
