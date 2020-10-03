@@ -1,6 +1,5 @@
 import { AudioSpeaker } from './audioSpeaker';
 import { Player } from './beings';
-import { Entity } from './entity';
 import { TypelessEvent } from './typelessEvent';
 
 const DISTANCE_MULTIP = 10000;

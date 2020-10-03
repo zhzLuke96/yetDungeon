@@ -6,7 +6,6 @@ import {
   positionSystem,
   descriptibleSystem,
 } from './systems/besic';
-import { Tile } from './tile';
 
 interface TitleProps {
   ch: string;
