@@ -8,6 +8,16 @@ import {
 import { positionSystem, tileSystem } from './besic';
 import { GameMap } from '../map';
 import { Game } from '../game';
+import { GlobalSounds } from '../sounds';
+
+const playFloorSound = (tile: ECS.Entity, x: number, y: number, z: number) => {
+  if (tile === Game.Tiles.floor) {
+    GlobalSounds.sandBlockSound(x, y, z);
+  }
+  if (tile === Game.Tiles.stairsDown || tile === Game.Tiles.stairsUp) {
+    GlobalSounds.stoneBlockSound(x, y, z);
+  }
+};
 
 export const canPerception = (self: ECS.Entity, target: ECS.Entity) => {
   if (self === target) {
@@ -47,6 +57,10 @@ export const tryMove = (
   }
   const { being, tile, items } = map.getAt(x, y, z);
   if (being) {
+    if (being === entity) {
+      // ❗ random walker maybe to [0,0]
+      return;
+    }
     return tryTouch(entity, being);
   }
   if (!tile) {
@@ -58,17 +72,23 @@ export const tryMove = (
   }
   const { walkable, diggable } = tile.getComponent(tileSystem)!;
   if (entity.hasSystem(playerSystem) && diggable) {
+    GlobalSounds.stoneDiggedSound(x, y, z);
     return map.dig(x, y, z);
   }
   if (walkable) {
     tile.dispatchEvent('trampled', entity);
     const old = entity.getComponent(positionSystem)!;
+    playFloorSound(tile, old.x, old.y, old.z);
     entity.updateComponent(positionSystem, { x, y, z });
     return map.updateBeingPosition(entity, old.x, old.y, old.z);
   }
 };
 
 const tryTouch = (entity: ECS.Entity, target: ECS.Entity) => {
+  if (!entity.hasSystem(playerSystem) && !target.hasSystem(playerSystem)) {
+    // ❗ peace between monsters
+    return;
+  }
   if (entity.hasSystem(attackSystem) && target.hasSystem(destructibleSystem)) {
     tryAttack(entity, target);
   } else {

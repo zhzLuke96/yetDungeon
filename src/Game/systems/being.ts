@@ -5,6 +5,7 @@ import { broadcastMessage, canPerception, tryMove } from './utils';
 import * as ROT from 'rot-js';
 import { GameMap } from '../map';
 import { Game, MainGame } from '../game';
+import { GlobalSounds } from '../sounds';
 
 class DestructibleSystem extends ECS.System<{
   hp: number;
@@ -242,6 +243,13 @@ class FungusSystem extends ECS.System<{ growthsRemaining: number }> {
     };
   }
 
+  mountEntity(entity: ECS.Entity) {
+    entity.addEventListener('@DestructibleSystem/death', () => {
+      const { x, y, z } = entity.getComponent(positionSystem)!;
+      GlobalSounds.grassDiggedSound(x, y, z);
+    });
+  }
+
   update(entities: ECS.Entity[], ctx: any) {
     entities.forEach((entity) => {
       const { growthsRemaining } = entity.getComponent(this)!;
@@ -281,6 +289,10 @@ class FungusSystem extends ECS.System<{ growthsRemaining: number }> {
         y: y + yOffset,
         z,
       });
+
+      // play sound
+      GlobalSounds.grassDiggedSound(x + xOffset, y + yOffset, z);
+
       ECS.MainWorld.getVal('map').addBeing(fungus);
       entity.updateComponent(this, { growthsRemaining: growthsRemaining - 1 });
 

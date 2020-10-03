@@ -1,6 +1,4 @@
-import { Entity, EntityProperties } from './entity';
 import { Repository } from './repository';
-import { Mixins } from './mixins';
 import ECS from './ECS';
 import {
   appearanceSystem,

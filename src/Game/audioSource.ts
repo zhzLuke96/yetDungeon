@@ -2,25 +2,22 @@
 
 import { TypelessEvent } from './typelessEvent';
 
-interface AudioProperty {
-  path: string;
-  name: string;
-  maxVolume: number; // 0 ~ 1
-}
-
 // TODO: 由于不是实时游戏，音效应该做一个限制，一定时间一个speaker只播放一次，不然会鬼畜
 
 // TODO: 隔墙音效，搁着实体应该也可以听到声音
-export class AudioSpeaker {
+export class AudioSource {
   private sources: AudioBuffer[];
   private ctx: AudioContext;
   private panner: PannerNode;
+  private gain: GainNode;
 
   constructor(audios: any[], ctx: AudioContext) {
     this.ctx = ctx;
     this.panner = ctx.createPanner();
     this.panner.panningModel = 'HRTF';
     this.panner.connect(ctx.destination);
+    this.gain = ctx.createGain();
+    this.gain.connect(this.panner);
     this.sources = [];
 
     // node require to { default: [path] as sting }
@@ -36,16 +33,17 @@ export class AudioSpeaker {
     return this.sources[Math.min(this.sources.length - 1, Math.max(0, idx))];
   }
 
-  playRandomAt(soundX: number, soundY: number, soundZ = 0) {
+  playRandomAt(soundX: number, soundY: number, soundZ = 0, level = 1) {
     this.playAt(
       soundX,
       soundY,
       soundZ,
-      Math.floor(Math.random() * this.sources.length)
+      Math.floor(Math.random() * this.sources.length),
+      level
     );
   }
 
-  playAt(soundX: number, soundY: number, soundZ = 0, playIdx = 0) {
+  playAt(soundX: number, soundY: number, soundZ = 0, playIdx = 0, level = 1) {
     if (this.isEmpty()) {
       return;
     }
@@ -53,6 +51,10 @@ export class AudioSpeaker {
     this.panner.positionX.value = soundX;
     this.panner.positionY.value = soundY;
     this.panner.positionZ.value = soundZ;
+
+    // set volume
+    this.gain.gain.value = level;
+
     const buffer = this.getAudio(playIdx);
     this.processAudio(buffer);
   }
@@ -77,7 +79,7 @@ export class AudioSpeaker {
     const source = ctx.createBufferSource();
     source.connect(this.panner);
     source.buffer = buffer;
-    source.connect(this.ctx.destination);
+    this.panner.connect(ctx.destination);
     source.start();
   }
 }
