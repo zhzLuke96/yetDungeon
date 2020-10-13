@@ -16,6 +16,7 @@ import {
   batSystem,
   bigSlimeSystem,
   smallSlimeSystem,
+  legsSystem,
 } from './systems/being';
 import { messageLoggerSystem } from './systems/player';
 
@@ -54,6 +55,10 @@ export const createPlayer = () =>
     },
     {
       system: messageLoggerSystem,
+      params: [],
+    },
+    {
+      system: legsSystem,
       params: [],
     },
   ]).createInstance('player');
@@ -149,6 +154,10 @@ BeingRepository.define(
     },
     {
       system: perceptionSystem,
+      params: [],
+    },
+    {
+      system: legsSystem,
       params: [],
     },
   ])

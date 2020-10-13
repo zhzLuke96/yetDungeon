@@ -95,7 +95,7 @@ export namespace ECS {
 
   interface SystemProperties {
     system: System<any>;
-    params: any[];
+    params?: any[];
   }
 
   class World {

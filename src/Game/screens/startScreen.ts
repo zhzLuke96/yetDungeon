@@ -41,6 +41,11 @@ export class StartScreen implements Screen {
       display.drawText(startX, startY + Number(i), `%c{yellow}${line}`);
     }
     display.drawText(startX + 4, startY + i + 2, 'Press [Enter] to start!');
+    display.drawText(
+      startX + 4,
+      startY + i + 4,
+      'Press [M] to MapLab do something aha~'
+    );
   }
 
   handleInput(inputType: string, inputData: any, game: Game) {
@@ -48,6 +53,9 @@ export class StartScreen implements Screen {
     if (inputType === 'keydown') {
       if (inputData.key === 'Enter') {
         game.dispatchEvent('goto_play_screen');
+      }
+      if (inputData.key === 'M' || inputData.key === 'm') {
+        game.dispatchEvent('goto_map_screen');
       }
     }
   }

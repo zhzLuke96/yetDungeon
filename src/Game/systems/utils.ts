@@ -10,15 +10,6 @@ import { GameMap } from '../map';
 import { Game } from '../game';
 import { GlobalSounds } from '../sounds';
 
-const playFloorSound = (tile: ECS.Entity, x: number, y: number, z: number) => {
-  if (tile === Game.Tiles.floor) {
-    GlobalSounds.sandBlockSound(x, y, z);
-  }
-  if (tile === Game.Tiles.stairsDown || tile === Game.Tiles.stairsUp) {
-    GlobalSounds.stoneBlockSound(x, y, z);
-  }
-};
-
 export const canPerception = (self: ECS.Entity, target: ECS.Entity) => {
   if (self === target) {
     return false;
@@ -77,13 +68,8 @@ export const tryMove = (
   }
   if (walkable) {
     const old = entity.getComponent(positionSystem)!;
-    if (items.length !== 0) {
-      GlobalSounds.clothSound(old.x, old.y, old.z);
-    } else {
-      tile.dispatchEvent('trampled', entity);
-      entity.dispatchEvent('moveto', x, y, z);
-      playFloorSound(tile, old.x, old.y, old.z);
-    }
+    tile.dispatchEvent('trampled', entity);
+    entity.dispatchEvent('moveto', { tile, items }, x, y, z);
     entity.updateComponent(positionSystem, { x, y, z });
     return map.updateBeingPosition(entity, old.x, old.y, old.z);
   }

@@ -2,7 +2,9 @@
 
 more interactive
 
-![screenshot](/doc/screenshot_0929.png)
+![screenshot1](/doc/screenshot_0929.png)
+![screenshot2](/doc/world_map2.png)
+![screenshot2](/doc/world_map3.png)
 
 ## Background
 

@@ -59,6 +59,10 @@ export const GlobalSounds = {
     name: 'batDeath',
     audios: [require('./assets/sounds/mob/bat/death.ogg')],
   }),
+  batLoopSound: MainSoundEngine.createTrigger({
+    name: 'batLoop',
+    audios: [require('./assets/sounds/mob/bat/loop.ogg')],
+  }),
   slimeSound: MainSoundEngine.createTrigger({
     name: 'slimeSound',
     audios: [

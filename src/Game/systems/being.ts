@@ -1,5 +1,4 @@
 import ECS from '../ECS';
-import { MainSoundEngine } from '../soundEngine';
 import { appearanceSystem, positionSystem, tileSystem } from './besic';
 import { broadcastMessage, canPerception, tryMove } from './utils';
 import * as ROT from 'rot-js';
@@ -305,130 +304,6 @@ class FungusSystem extends ECS.System<{ growthsRemaining: number }> {
 }
 export const fungusSystem = new FungusSystem();
 
-export class InventoryHolderSystem extends ECS.System<{
-  size: number;
-  items: (ECS.Entity | null)[];
-}> {
-  createComponent(size = 10) {
-    return { size, items: [] as (ECS.Entity | null)[] };
-  }
-}
-export const inventoryHolderSystem = new InventoryHolderSystem();
-export const inventoryHolderActions = {
-  getItems(entity: ECS.Entity) {
-    if (!entity.hasSystem(inventoryHolderSystem)) {
-      return [];
-    }
-    const { items } = entity.getComponent(inventoryHolderSystem)!;
-    return items;
-  },
-
-  getItem(entity: ECS.Entity, i: number) {
-    if (!entity.hasSystem(inventoryHolderSystem)) {
-      return null;
-    }
-    const { items } = entity.getComponent(inventoryHolderSystem)!;
-    return items[i];
-  },
-
-  addItem(entity: ECS.Entity, item: ECS.Entity) {
-    if (!entity.hasSystem(inventoryHolderSystem)) {
-      return false;
-    }
-    const { size, items } = entity.getComponent(inventoryHolderSystem)!;
-    // Try to find a slot, returning true only if we could add the item.
-    for (let i = 0; i < size; i++) {
-      if (!items[i]) {
-        items[i] = item;
-        entity.updateComponentKV(inventoryHolderSystem, 'items', items);
-        return true;
-      }
-    }
-    return false;
-  },
-
-  removeItem(entity: ECS.Entity, i: number) {
-    if (!entity.hasSystem(inventoryHolderSystem)) {
-      return;
-    }
-    const { items } = entity.getComponent(inventoryHolderSystem)!;
-    items[i] = null;
-    entity.updateComponentKV(inventoryHolderSystem, 'items', items);
-  },
-
-  canAddItem(entity: ECS.Entity) {
-    if (!entity.hasSystem(inventoryHolderSystem)) {
-      return false;
-    }
-    const { size, items } = entity.getComponent(inventoryHolderSystem)!;
-    // Try to find a slot, returning true only if we could add the item.
-    for (let i = 0; i < size; i++) {
-      if (!items[i]) {
-        return true;
-      }
-    }
-    return false;
-  },
-
-  pickupItems(entity: ECS.Entity, indices: number[]) {
-    if (!entity.hasSystem(inventoryHolderSystem)) {
-      return false;
-    }
-    const map = ECS.MainWorld.getVal('map') as GameMap;
-    if (!map) {
-      // TODO: Error manage
-      return;
-    }
-    const { x, y, z } = entity.getComponent(positionSystem)!;
-    // Allows the user to pick up items from the map, where indices is
-    // the indices for the array returned by map.getItemsAt
-    // FIXME: 重构结束这段代码才能正常
-    const mapItems = (map.getItemsAt(x, y, z) as any) as ECS.Entity[];
-    let added = 0;
-    // Iterate through all indices.
-    for (let i = 0; i < indices.length; i++) {
-      // Try to add the item. If our inventory is not full, then splice the
-      // item out of the list of items. In order to fetch the right item, we
-      // have to offset the number of items already added.
-      if (
-        inventoryHolderActions.addItem(entity, mapItems[indices[i] - added])
-      ) {
-        mapItems.splice(indices[i] - added, 1);
-        added++;
-      } else {
-        // Inventory is full
-        break;
-      }
-    }
-    // Update the map items
-    // FIXME: 重构之后才能正常运行
-    map.setItemsAt(x, y, z, mapItems as any);
-    // Return true only if we added all items
-    return added === indices.length;
-  },
-
-  dropItem(entity: ECS.Entity, i: number) {
-    if (!entity.hasSystem(inventoryHolderSystem)) {
-      return;
-    }
-    const map = ECS.MainWorld.getVal('map') as GameMap;
-    if (!map) {
-      // TODO: Error manage
-      return;
-    }
-    const { size, items } = entity.getComponent(inventoryHolderSystem)!;
-    const { x, y, z } = entity.getComponent(positionSystem)!;
-    // Drops an item to the current map tile
-    if (items[i]) {
-      if (map && items[i] !== null) {
-        // FIXME: 重构完成之后才能用
-        map.addItem(x, y, z, items[i]!);
-      }
-      inventoryHolderActions.removeItem(entity, i);
-    }
-  },
-};
-
 class BatSystem extends ECS.System<null> {
   mountEntity(entity: ECS.Entity) {
     entity.addEventListener('damaged', () => {
@@ -439,11 +314,16 @@ class BatSystem extends ECS.System<null> {
       const { x, y, z } = entity.getComponent(positionSystem)!;
       GlobalSounds.batDeathSound(x, y, z);
     });
+    entity.addEventListener('moveto', (_, x: number, y: number, z: number) => {
+      if (Math.random() < 0.1) {
+        GlobalSounds.batLoopSound(x, y, z);
+      }
+    });
   }
 
   update(entities: ECS.Entity[], ctx: any) {
     entities.forEach((entity) => {
-      if (Math.random() * 100 > 10) {
+      if (Math.random() < 0.7) {
         return;
       }
       const { x, y, z } = entity.getComponent(positionSystem)!;
@@ -468,12 +348,14 @@ class BigSlimeSystem extends ECS.System<null> {
         3
       ).map(([x1, y1]) => [x + x1, y + y1]);
 
+      broadcastMessage(entity, 'message', ['you see slime split!']);
+
       for (const [x1, y1] of smalls) {
         const smallSlime = Game.BeingRepository.create('SmallSlime')!;
         smallSlime?.updateComponent(positionSystem, { x: x1, y: y1, z });
       }
     });
-    entity.addEventListener('moveto', (x: number, y: number, z: number) => {
+    entity.addEventListener('moveto', (_, x: number, y: number, z: number) => {
       GlobalSounds.bigSlimeSound(x, y, z);
     });
   }
@@ -490,9 +372,35 @@ class SmallSlimeSystem extends ECS.System<null> {
       const { x, y, z } = entity.getComponent(positionSystem)!;
       GlobalSounds.slimeSound(x, y, z);
     });
-    entity.addEventListener('moveto', (x: number, y: number, z: number) => {
+    entity.addEventListener('moveto', (_, x: number, y: number, z: number) => {
       GlobalSounds.smallSlimeSound(x, y, z);
     });
   }
 }
 export const smallSlimeSystem = new SmallSlimeSystem();
+
+class LegsSystem extends ECS.System<null> {
+  mountEntity(entity: ECS.Entity) {
+    entity.addEventListener(
+      'moveto',
+      (
+        { tile, items }: { tile: ECS.Entity; items: ECS.Entity[] },
+        x: number,
+        y: number,
+        z: number
+      ) => {
+        if (items.length > 0) {
+          GlobalSounds.clothSound(x, y, z);
+          return;
+        }
+        if (tile === Game.Tiles.floor) {
+          GlobalSounds.sandBlockSound(x, y, z);
+        }
+        if (tile === Game.Tiles.stairsDown || tile === Game.Tiles.stairsUp) {
+          GlobalSounds.stoneBlockSound(x, y, z);
+        }
+      }
+    );
+  }
+}
+export const legsSystem = new LegsSystem();

@@ -1,10 +1,6 @@
 import { GlobalUIEvents } from '../UI/components/GlobalUIEvents';
 import { Game, MainGame } from './game';
 import * as _ from 'lodash';
-import ECS from './ECS';
-import { positionSystem } from './systems/besic';
-import { getRandomArrayElements } from './utils';
-import * as ROT from 'rot-js';
 
 window.addEventListener('load', initGameEvents);
 
@@ -17,6 +13,9 @@ function initGameEvents() {
   });
   MainGame.addEventListener('goto_play_screen', () => {
     MainGame.switchScreen(Game.Screens.playScreen);
+  });
+  MainGame.addEventListener('goto_map_screen', () => {
+    MainGame.switchScreen(Game.Screens.mapScreen);
   });
   MainGame.addEventListener('sendMessage', GlobalUIEvents.addLogs);
   MainGame.addEventListener('sendMessageNearby', GlobalUIEvents.addLogs);
@@ -39,25 +38,3 @@ function initGameEvents() {
     }, 100)
   );
 }
-
-function GameDebuggerInit() {
-  (window as any).debug = {
-    createBeing(name: string, num = 1) {
-      const player = ECS.MainWorld.getVal('player') as ECS.Entity;
-
-      const { x, y, z } = player.getComponent(positionSystem)!;
-
-      const points = getRandomArrayElements(
-        ROT.DIRS[8],
-        num
-      ).map(([x1, y1]) => [x + x1, y + y1]);
-
-      for (const [x1, y1] of points) {
-        const being = Game.BeingRepository.create(name);
-        being?.updateComponent(positionSystem, { x: x1, y: y1, z });
-      }
-    },
-  };
-}
-
-GameDebuggerInit();

@@ -11,13 +11,16 @@ import { LoseScreen } from './screens/loseScreen';
 import { StartScreen } from './screens/startScreen';
 import { PlayScreen } from './screens/playScreen';
 import { WinScreen } from './screens/winScreen';
+import { MapScreen } from './screens/mapScreen';
 import { Tiles } from './tiles';
 import ECS from './ECS';
+import './debugger';
 
 const startScreen = new StartScreen();
 const playScreen = new PlayScreen();
 const loseScreen = new LoseScreen();
 const winScreen = new WinScreen();
+const mapScreen = new MapScreen();
 
 export class Game extends TypelessEvent {
   static Tiles = Tiles;
@@ -27,6 +30,7 @@ export class Game extends TypelessEvent {
     playScreen,
     loseScreen,
     winScreen,
+    mapScreen,
   };
 
   static BeingRepository = BeingRepository;
