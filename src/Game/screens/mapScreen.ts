@@ -19,12 +19,23 @@ const getRegionColor = (h: number) => {
   return 'rgb(255, 255, 255)';
 };
 
+const colors = [
+  'rgb(65, 104, 193)',
+  'rgb(67, 101, 181)',
+  'rgb(207, 209, 123)',
+  'rgb(84, 149, 22)',
+  'rgb(65, 107, 19)',
+  'rgb(93, 68, 63)',
+  'rgb(76, 60, 58)',
+  'rgb(255, 255, 255)',
+];
+
 export class MapScreen implements Screen {
   private x = 50;
   private y = 50;
 
   private max = 4;
-  private min = -3;
+  private min = -2;
   // constructor() {
   //
   // }
@@ -37,6 +48,8 @@ export class MapScreen implements Screen {
     const h = game.getScreenHeight();
     const w = game.getScreenWidth();
     this.drawMap(display, h, w);
+
+    display.drawText(0, h, '[ECS] to back.[Enter] random map. [↑↓←→] to move.');
   }
 
   drawMap(display: ROT.Display, h: number, w: number) {
@@ -47,13 +60,13 @@ export class MapScreen implements Screen {
       this.x + w,
       this.y + h,
       max,
-      min,
-      [0.3, 0.4, 0.45, 0.55, 0.6, 0.7, 0.9]
+      min
+      // [0.3, 0.4, 0.45, 0.55, 0.6, 0.7, 0.9]
     );
 
     for (let j = 0; j < h; j++) {
       for (let i = 0; i < w; i++) {
-        const val = (map[j][i] - min) / (max - min);
+        const val = map[j][i];
         const blockVal = ~~(val * 36);
         display.draw(
           i,
@@ -62,6 +75,7 @@ export class MapScreen implements Screen {
           'black',
           // 'rgb(' + r + ',' + r + ',' + r + ',' + r + ')'
           getRegionColor(val)
+          // colors[val]
         );
       }
     }
@@ -107,6 +121,9 @@ export class MapScreen implements Screen {
       if (inputData.key === 'Enter') {
         MainWorldMap.updateSeed(Math.floor(Math.random() * 65535));
         game.refresh();
+      }
+      if (inputData.key === 'Escape') {
+        game.dispatchEvent('goto_start_screen');
       }
     }
   }

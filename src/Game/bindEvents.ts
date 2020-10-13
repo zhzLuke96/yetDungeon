@@ -17,6 +17,9 @@ function initGameEvents() {
   MainGame.addEventListener('goto_map_screen', () => {
     MainGame.switchScreen(Game.Screens.mapScreen);
   });
+  MainGame.addEventListener('goto_start_screen', () => {
+    MainGame.switchScreen(Game.Screens.startScreen);
+  });
   MainGame.addEventListener('sendMessage', GlobalUIEvents.addLogs);
   MainGame.addEventListener('sendMessageNearby', GlobalUIEvents.addLogs);
 

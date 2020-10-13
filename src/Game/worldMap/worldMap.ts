@@ -63,7 +63,7 @@ class WorldMap {
     return map;
   }
 
-  getNormalizationMap(
+  getNormalizationLayerMap(
     topLeftX: number,
     topLeftY: number,
     bottomRightX: number,
@@ -81,7 +81,24 @@ class WorldMap {
     return normalization(hmap, max, min, layer);
   }
 
-  updateSeed(seed: number) {
+  getNormalizationMap(
+    topLeftX: number,
+    topLeftY: number,
+    bottomRightX: number,
+    bottomRightY: number,
+    max: number,
+    min: number
+  ): number[][] {
+    const hmap = this.getHeightMap(
+      topLeftX,
+      topLeftY,
+      bottomRightX,
+      bottomRightY
+    );
+    return hmap.map((row) => row.map((h) => (h - min) / max));
+  }
+
+  updateSeed(seed = Math.floor(Math.random() * 65535)) {
     this.noise = new ROT.Noise.Simplex(seed);
   }
 }
